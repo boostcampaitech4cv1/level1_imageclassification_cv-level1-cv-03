@@ -21,7 +21,7 @@ from loss import create_criterion
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 import wandb
-
+from copy import deepcopy
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -101,22 +101,18 @@ def train(data_dir, model_dir, args):
         mean=dataset.mean,
         std=dataset.std,
     )
-    val_transform_module = getattr(import_module("dataset_mask"), 'BaseAugmentation')  # default: BaseAugmentation
+    val_transform_module = getattr(import_module("dataset_mask"), args.augmentation)  # default: BaseAugmentation
     transform_val = val_transform_module(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
     )
 
-
-    # -- data_loader
+    # -- data_loader 
     train_set, val_set = dataset.split_dataset()
-
-    train_set = train_set.dataset
-    train_set.set_transform(transform_train)
-    val_set = val_set.dataset
-    val_set.set_transform(transform_val)
-
+    train_set.dataset.set_transform(transform_train)
+    val_set.dataset.set_transform(transform_val)
+    
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
