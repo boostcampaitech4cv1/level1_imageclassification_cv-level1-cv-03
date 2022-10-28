@@ -113,7 +113,7 @@ def train(data_dir, model_dir, args):
     train_set, val_set = dataset.split_dataset()
 
     train_set.dataset.transform = transform_train
-    val_set.dataset.tarnsform = transform_val
+    val_set.dataset.transform = transform_val
 
     train_loader = DataLoader(
         train_set,

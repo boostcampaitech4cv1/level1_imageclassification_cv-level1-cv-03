@@ -109,7 +109,7 @@ def train(data_dir, model_dir, args):
     # -- data_loader
     train_set, val_set = dataset.split_dataset()
     train_set.dataset.transform = transform_train
-    val_set.dataset.tarnsform = transform_val
+    val_set.dataset.transform = transform_val
 
     train_loader = DataLoader(
         train_set,
@@ -143,7 +143,6 @@ def train(data_dir, model_dir, args):
     else:
         criterion = create_criterion(args.criterion)
 
-    criterion = create_criterion(args.criterion)  # default: cross_entropy
     opt_module = getattr(import_module("torch.optim"), args.optimizer)  # default: SGD
     optimizer = opt_module(
         filter(lambda p: p.requires_grad, model.parameters()),
