@@ -7,7 +7,6 @@ import random
 import re
 from importlib import import_module
 from pathlib import Path
-import wandb
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,8 +15,12 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset import MaskBaseDataset
+from dataset_mask import MaskBaseDataset
 from loss import create_criterion
+
+from sklearn.metrics import f1_score
+from sklearn.model_selection import train_test_split
+import wandb
 
 
 def seed_everything(seed):
@@ -38,30 +41,22 @@ def get_lr(optimizer):
 def grid_image(np_images, gts, preds, n=16, shuffle=False):
     batch_size = np_images.shape[0]
     assert n <= batch_size
-
     choices = random.choices(range(batch_size), k=n) if shuffle else list(range(n))
     figure = plt.figure(figsize=(12, 18 + 2))  # cautions: hardcoded, 이미지 크기에 따라 figsize 를 조정해야 할 수 있습니다. T.T
     plt.subplots_adjust(top=0.8)  # cautions: hardcoded, 이미지 크기에 따라 top 를 조정해야 할 수 있습니다. T.T
     n_grid = int(np.ceil(n ** 0.5))
-    tasks = ["mask", "gender", "age"]
+    task = "mask"
     for idx, choice in enumerate(choices):
         gt = gts[choice].item()
         pred = preds[choice].item()
         image = np_images[choice]
-        gt_decoded_labels = MaskBaseDataset.decode_multi_class(gt)
-        pred_decoded_labels = MaskBaseDataset.decode_multi_class(pred)
-        title = "\n".join([
-            f"{task} - gt: {gt_label}, pred: {pred_label}"
-            for gt_label, pred_label, task
-            in zip(gt_decoded_labels, pred_decoded_labels, tasks)
-        ])
 
+        title = f"{task} - gt: {gt}, pred: {pred}"
         plt.subplot(n_grid, n_grid, idx + 1, title=title)
         plt.xticks([])
         plt.yticks([])
         plt.grid(False)
         plt.imshow(image, cmap=plt.cm.binary)
-
     return figure
 
 
@@ -85,27 +80,6 @@ def increment_path(path, exist_ok=False):
 
 def train(data_dir, model_dir, args):
     seed_everything(args.seed)
-    
-    ####### wandb settings #######
-    wandb.init(project="age_range_classification", entity="cv_3")
-    wandb.config = {
-        "learning_rate": args.lr,
-        "epochs": args.epochs,
-        "batch_size": args.batch_size,
-        "seed" : args.seed,
-        "dataset" : args.dataset,
-        "augmentation" : args.augmentation,
-        "resize" : args.resize,
-        "valid_batch_size" : args.valid_batch_size,
-        "model" : args.model,
-        "optimizer" : args.optimizer,
-        "val_ratio" : args.val_ratio,
-        "criterion" : args.criterion,
-        "lr_decay_step" : args.lr_decay_step,
-        "log_interval" : args.lr_decay_step,
-        "name" : args.name
-    }
-    ##############################
 
     save_dir = increment_path(os.path.join(model_dir, args.name))
 
@@ -114,23 +88,32 @@ def train(data_dir, model_dir, args):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     # -- dataset
-    dataset_module = getattr(import_module("dataset"), args.dataset)  # default: MaskBaseDataset
+    dataset_module = getattr(import_module("dataset_mask"), args.dataset)  # default: MaskBaseDataset
     dataset = dataset_module(
         data_dir=data_dir,
     )
     num_classes = dataset.num_classes  # 18
 
     # -- augmentation
-    transform_module = getattr(import_module("dataset"), args.augmentation)  # default: BaseAugmentation
-    transform = transform_module(
+    train_transform_module = getattr(import_module("dataset_mask"), args.augmentation)  # default: BaseAugmentation
+    transform_train = train_transform_module(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
     )
-    dataset.set_transform(transform)
+    val_transform_module = getattr(import_module("dataset_mask"), 'BaseAugmentation')  # default: BaseAugmentation
+    transform_val = val_transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
 
     # -- data_loader
     train_set, val_set = dataset.split_dataset()
+
+    train_set.dataset.transform = transform_train
+    val_set.dataset.tarnsform = transform_val
 
     train_loader = DataLoader(
         train_set,
@@ -151,7 +134,7 @@ def train(data_dir, model_dir, args):
     )
 
     # -- model
-    model_module = getattr(import_module("model"), args.model)  # default: BaseModel
+    model_module = getattr(import_module("model_mask"), args.model)  # default: BaseModel
     model = model_module(
         num_classes=num_classes
     ).to(device)
@@ -165,6 +148,8 @@ def train(data_dir, model_dir, args):
         lr=args.lr,
         weight_decay=5e-4
     )
+
+    
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
     # -- logging
@@ -174,7 +159,7 @@ def train(data_dir, model_dir, args):
 
     best_val_acc = 0
     best_val_loss = np.inf
-    for epoch in range(args.epochs):
+    for epoch in range(1, args.epochs+1):
         # train loop
         model.train()
         loss_value = 0
@@ -208,11 +193,9 @@ def train(data_dir, model_dir, args):
 
                 loss_value = 0
                 matches = 0
-
-                # wandb 학습 단계에서 Loss, Accuracy 로그 저장
                 wandb.log({
-                    "Train loss": train_loss,
-                    "Train acc" : train_acc
+                    "Train loss":train_loss,
+                    "Train acc":train_acc
                 })
 
         scheduler.step()
@@ -260,34 +243,33 @@ def train(data_dir, model_dir, args):
             logger.add_scalar("Val/accuracy", val_acc, epoch)
             logger.add_figure("results", figure, epoch)
 
-            # wandb 검증 단계에서 Loss, Accuracy 로그 저장
             wandb.log({
-                "Valid loss": val_loss,
-                "Valid acc" : val_acc,
-                "results" : figure
+                "Valid loss":val_loss,
+                "Valid acc":val_acc,
+                "results":figure
             })
-            print()
 
+            print()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # Data and model checkpoints directories
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
-    parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train (default: 1)')
+    parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train (default: 1)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
     parser.add_argument("--resize", nargs="+", type=list, default=[128, 96], help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
     parser.add_argument('--valid_batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--model', type=str, default='MyModel', help='model type (default: BaseModel)')
-    parser.add_argument('--optimizer', type=str, default='SGD', help='optimizer type (default: SGD)')
-    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-3)')
+    parser.add_argument('--model', type=str, default='ModelMask', help='model type (default: BaseModel)')
+    parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: SGD)')
+    parser.add_argument('--lr', type=float, default=1e-5, help='learning rate (default:1e-3)')
     parser.add_argument('--val_ratio', type=float, default=0.2, help='ratio for validaton (default: 0.2)')
     parser.add_argument('--criterion', type=str, default='f1', help='criterion type (default: cross_entropy)')
     parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
-    parser.add_argument('--name', default='exp', help='model save at {SM_MODEL_DIR}/{name}')
+    parser.add_argument('--name', default='exp_mask', help='model save at {SM_MODEL_DIR}/{name}')
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
@@ -295,6 +277,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     print(args)
+
+    wandb.init(project  ="mask_classification", entity="cv_3")
+    wandb.config.update(args)
 
     data_dir = args.data_dir
     model_dir = args.model_dir

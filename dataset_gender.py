@@ -85,28 +85,8 @@ class GenderLabels(int, Enum):
             raise ValueError(f"Gender value should be either 'male' or 'female', {value}")
 
 
-class AgeLabels(int, Enum):
-    YOUNG = 0
-    MIDDLE = 1
-    OLD = 2
-
-    @classmethod
-    def from_number(cls, value: str) -> int:
-        try:
-            value = int(value)
-        except Exception:
-            raise ValueError(f"Age value should be numeric, {value}")
-
-        if value < 30:
-            return cls.YOUNG
-        elif value < 60:
-            return cls.MIDDLE
-        else:
-            return cls.OLD
-
-
 class MaskBaseDataset(Dataset):
-    num_classes = 3# * 2 * 3
+    num_classes = 2
 
     _file_names = {
         "mask1": MaskLabels.MASK,
@@ -121,7 +101,6 @@ class MaskBaseDataset(Dataset):
     image_paths = []
     mask_labels = []
     gender_labels = []
-    age_labels = []
 
     def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
         self.data_dir = data_dir
@@ -150,12 +129,9 @@ class MaskBaseDataset(Dataset):
 
                 id, gender, race, age = profile.split("_")
                 gender_label = GenderLabels.from_str(gender)
-                age_label = AgeLabels.from_number(age)
 
                 self.image_paths.append(img_path)
-                self.mask_labels.append(mask_label)
                 self.gender_labels.append(gender_label)
-                self.age_labels.append(age_label)
 
     def calc_statistics(self):
         has_statistics = self.mean is not None and self.std is not None
@@ -178,40 +154,23 @@ class MaskBaseDataset(Dataset):
         assert self.transform is not None, ".set_tranform 메소드를 이용하여 transform 을 주입해주세요"
 
         image = self.read_image(index)
-        mask_label = self.get_mask_label(index)
         gender_label = self.get_gender_label(index)
-        age_label = self.get_age_label(index)
-        multi_class_label = self.encode_multi_class(mask_label, gender_label, age_label)
 
         image_transform = self.transform(image)
-        return image_transform, age_label
+        return image_transform, gender_label
 
     def __len__(self):
         return len(self.image_paths)
 
-    def get_mask_label(self, index) -> MaskLabels:
-        return self.mask_labels[index]
+    # def get_mask_label(self, index) -> MaskLabels:
+    #     return self.mask_labels[index]
 
     def get_gender_label(self, index) -> GenderLabels:
         return self.gender_labels[index]
 
-    def get_age_label(self, index) -> AgeLabels:
-        return self.age_labels[index]
-
     def read_image(self, index):
         image_path = self.image_paths[index]
         return Image.open(image_path)
-
-    @staticmethod
-    def encode_multi_class(mask_label, gender_label, age_label) -> int:
-        return mask_label * 6 + gender_label * 3 + age_label
-
-    @staticmethod
-    def decode_multi_class(multi_class_label) -> Tuple[MaskLabels, GenderLabels, AgeLabels]:
-        mask_label = (multi_class_label // 6) % 3
-        gender_label = (multi_class_label // 3) % 2
-        age_label = multi_class_label % 3
-        return mask_label, gender_label, age_label
 
     @staticmethod
     def denormalize_image(image, mean, std):
@@ -279,12 +238,9 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
 
                     id, gender, race, age = profile.split("_")
                     gender_label = GenderLabels.from_str(gender)
-                    age_label = AgeLabels.from_number(age)
 
                     self.image_paths.append(img_path)
-                    self.mask_labels.append(mask_label)
                     self.gender_labels.append(gender_label)
-                    self.age_labels.append(age_label)
 
                     self.indices[phase].append(cnt)
                     cnt += 1
