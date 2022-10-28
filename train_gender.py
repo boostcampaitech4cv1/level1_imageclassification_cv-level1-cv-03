@@ -93,13 +93,13 @@ def train(data_dir, model_dir, args):
     num_classes = dataset.num_classes
 
     # -- augmentation
-    train_transform_module = getattr(import_module("dataset_mask"), args.augmentation)  # default: BaseAugmentation
+    train_transform_module = getattr(import_module("dataset_gender"), args.augmentation)  # default: BaseAugmentation
     transform_train = train_transform_module(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
     )
-    val_transform_module = getattr(import_module("dataset_mask"), 'BaseAugmentation')  # default: BaseAugmentation
+    val_transform_module = getattr(import_module("dataset_gender"), 'BaseAugmentation')  # default: BaseAugmentation
     transform_val = val_transform_module(
         resize=args.resize,
         mean=dataset.mean,
