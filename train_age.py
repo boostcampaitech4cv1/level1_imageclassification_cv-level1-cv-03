@@ -120,9 +120,15 @@ def train(data_dir, model_dir, args):
     train_img_paths_1, train_labels_1 = train_df_label_1['img_path'].values, train_df_label_1['label'].values
     train_img_paths_2, train_labels_2 = train_df_label_2['img_path'].values, train_df_label_2['label'].values
     train_dataset = []
+    # 기본 이미지들을 데이터셋에다가 추가
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_1))
+    ##### 내가 추가한 Augmentation들 #####
+    # train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
+    # train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
+    # train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_1))
+    ######################################
     train_set = ConcatDataset(train_dataset)
 
     val_img_paths, val_labels = val_df['img_path'].values, val_df['label'].values
@@ -268,6 +274,7 @@ def train(data_dir, model_dir, args):
             wandb.log({
                 "Valid loss":val_loss,
                 "Valid acc":val_acc,
+                "Valid f1-score":val_f1,
                 "results":figure
             })
 
@@ -279,7 +286,7 @@ if __name__ == '__main__':
 
     # Data and model checkpoints directories
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
-    parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train (default: 1)')
+    parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train (default: 1)')
     # parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     # parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
     parser.add_argument("--resize", nargs="+", type=list, default=[128, 96], help='resize size for image when training')

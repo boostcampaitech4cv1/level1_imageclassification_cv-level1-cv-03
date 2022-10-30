@@ -318,6 +318,19 @@ class train_transform_1:
     def __call__(self, image):
         return self.transform(image)
 
+############################ My Augmentations ############################
+# class train_transform_1:
+#     def __init__(self, resize, mean, std, **args):
+#         self.transform = Compose([
+#             Resize(resize, Image.BILINEAR),
+#             ToTensor(),
+#             Normalize(mean=mean, std=std),
+#         ])
+
+#     def __call__(self, image):
+#         return self.transform(image)
+###########################################################################
+
 class val_transform:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
