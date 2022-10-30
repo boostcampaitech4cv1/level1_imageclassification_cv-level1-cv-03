@@ -2,3 +2,6 @@ __pycache__/
 model/
 wandb/
 output/
+output_mask/
+output_gender/
+output_age/
