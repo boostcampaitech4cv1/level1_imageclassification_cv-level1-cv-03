@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter
+from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, GaussianBlur, Grayscale, RandomHorizontalFlip
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
@@ -247,3 +247,58 @@ class TestDataset(Dataset):
 
     def __len__(self):
         return len(self.img_paths)
+
+
+class CustomDataset(Dataset):
+    def __init__(self, img_paths, labels, transforms=None):
+        self.img_paths = img_paths
+        self.labels = labels
+        self.transforms = transforms
+
+    def __getitem__(self, index):
+        img_path = self.img_paths[index]
+        image = Image.open(img_path)
+        
+        if self.transforms is not None:
+            image = self.transforms(image)
+
+        label = self.labels[index]
+        return image, label
+    
+    def __len__(self):
+        return len(self.img_paths)
+
+
+class train_transform_1:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_2:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class val_transform:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)

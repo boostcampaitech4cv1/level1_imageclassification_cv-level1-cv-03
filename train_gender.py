@@ -12,14 +12,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset_gender import MaskBaseDataset
+from dataset_gender import CustomDataset
 from loss import create_criterion
 
 from sklearn.metrics import f1_score
+from sklearn.model_selection import train_test_split
 import wandb
+import pandas as pd
+
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -39,7 +42,7 @@ def get_lr(optimizer):
 def grid_image(np_images, gts, preds, n=16, shuffle=False):
     batch_size = np_images.shape[0]
     assert n <= batch_size
-    choices = random.choices(range(batch_size), k=n) if shuffle else list(range(n))
+    choices = random.sample(range(batch_size), k=n) if shuffle else list(range(n))
     figure = plt.figure(figsize=(12, 18 + 2))  # cautions: hardcoded, 이미지 크기에 따라 figsize 를 조정해야 할 수 있습니다. T.T
     plt.subplots_adjust(top=0.8)  # cautions: hardcoded, 이미지 크기에 따라 top 를 조정해야 할 수 있습니다. T.T
     n_grid = int(np.ceil(n ** 0.5))
@@ -86,30 +89,50 @@ def train(data_dir, model_dir, args):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     # -- dataset
-    dataset_module = getattr(import_module("dataset_gender"), args.dataset)  # default: MaskBaseDataset
+    dataset_module = getattr(import_module("dataset_gender"), 'MaskBaseDataset')  # default: MaskBaseDataset
     dataset = dataset_module(
         data_dir=data_dir,
     )
     num_classes = dataset.num_classes
 
+    df = pd.DataFrame({'img_path' : dataset.image_paths, 'label' :dataset.gender_labels})
+    train_df, val_df, _, _ = train_test_split(df, df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
+    train_df_label_0 = train_df[train_df['label']==0]    # male   : 5835
+    train_df_label_1 = train_df[train_df['label']==1]    # female : 9285
+
     # -- augmentation
-    train_transform_module = getattr(import_module("dataset_gender"), args.augmentation)  # default: BaseAugmentation
-    transform_train = train_transform_module(
+    # ------------------------
+    transform_module = getattr(import_module("dataset_gender"), 'train_transform_1')
+    train_transform_1 = transform_module(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
     )
-    val_transform_module = getattr(import_module("dataset_gender"), 'BaseAugmentation')  # default: BaseAugmentation
-    transform_val = val_transform_module(
+    # -------------------------
+    transform_module = getattr(import_module("dataset_gender"), 'train_transform_2')
+    train_transform_2 = transform_module(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
     )
 
-    # -- data_loader
-    train_set, val_set = dataset.split_dataset()
-    train_set.dataset.set_transform(transform_train)
-    val_set.dataset.set_transform(transform_val)
+    transform_module = getattr(import_module("dataset_gender"), 'val_transform')
+    val_transform = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    train_img_paths_0, train_labels_0 = train_df_label_0['img_path'].values, train_df_label_0['label'].values
+    train_img_paths_1, train_labels_1 = train_df_label_1['img_path'].values, train_df_label_1['label'].values
+    train_dataset = []
+    train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
+    train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_2))
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
+    train_set = ConcatDataset(train_dataset)
+
+    val_img_paths, val_labels = val_df['img_path'].values, val_df['label'].values
+    val_set = CustomDataset(val_img_paths, val_labels, val_transform)
 
     train_loader = DataLoader(
         train_set,
@@ -130,7 +153,7 @@ def train(data_dir, model_dir, args):
     )
 
     # -- model
-    model_module = getattr(import_module("model_gender"), args.model)  # default: BaseModel
+    model_module = getattr(import_module("model_gender"), args.model)
     model = model_module(
         num_classes=num_classes
     ).to(device)
@@ -143,7 +166,7 @@ def train(data_dir, model_dir, args):
     else:
         criterion = create_criterion(args.criterion)
 
-    opt_module = getattr(import_module("torch.optim"), args.optimizer)  # default: SGD
+    opt_module = getattr(import_module("torch.optim"), args.optimizer)
     optimizer = opt_module(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=args.lr,
@@ -202,6 +225,8 @@ def train(data_dir, model_dir, args):
         scheduler.step()
 
         # val loop
+        epoch_preds = []
+        epoch_labels = []
         with torch.no_grad():
             print("Calculating validation results...")
             model.eval()
@@ -216,6 +241,9 @@ def train(data_dir, model_dir, args):
                 outs = model(inputs)
                 preds = torch.argmax(outs, dim=-1)
 
+                epoch_preds += preds.detach().cpu().numpy().tolist()
+                epoch_labels += labels.detach().cpu().numpy().tolist()  
+
                 loss_item = criterion(outs, labels).item()
                 acc_item = (labels == preds).sum().item()
                 val_loss_items.append(loss_item)
@@ -225,19 +253,22 @@ def train(data_dir, model_dir, args):
                     inputs_np = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
                     inputs_np = dataset_module.denormalize_image(inputs_np, dataset.mean, dataset.std)
                     figure = grid_image(
-                        inputs_np, labels, preds, n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
+                        inputs_np, labels, preds, n=16, shuffle=True
                     )
 
             val_loss = np.sum(val_loss_items) / len(val_loader)
             val_acc = np.sum(val_acc_items) / len(val_set)
             best_val_loss = min(best_val_loss, val_loss)
+
+            val_f1 = f1_score(epoch_preds, epoch_labels, average="macro")
+
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
                 best_val_acc = val_acc
             torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
             print(
-                f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2} || "
+                f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2}, f1: {val_f1:4.2} || "
                 f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
             )
             logger.add_scalar("Val/loss", val_loss, epoch)
@@ -259,11 +290,11 @@ if __name__ == '__main__':
     # Data and model checkpoints directories
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train (default: 1)')
-    parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
-    parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
+    # parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
+    # parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
     parser.add_argument("--resize", nargs="+", type=list, default=[128, 96], help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
-    parser.add_argument('--valid_batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
+    parser.add_argument('--valid_batch_size', type=int, default=64, help='input batch size for validing (default: 1000)')
     parser.add_argument('--model', type=str, default='ModelGender', help='model type (default: BaseModel)')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: SGD)')
     parser.add_argument('--lr', type=float, default=1e-5, help='learning rate (default:1e-3)')
