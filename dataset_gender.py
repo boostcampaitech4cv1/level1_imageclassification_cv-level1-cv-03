@@ -305,6 +305,8 @@ class train_transform_2:
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
             ToTensor(),
+            RandomHorizontalFlip(),
+            ColorJitter(saturation=(1.2, 1.5), hue=(0.2, 0.5)),
             Normalize(mean=mean, std=std),
         ])
 
