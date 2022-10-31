@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, GaussianBlur, RandomHorizontalFlip, RandomRotation, Grayscale
+from torchvision.transforms import * # Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, GaussianBlur, RandomHorizontalFlip, RandomRotation, Grayscale
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
@@ -319,19 +319,101 @@ class train_transform_1:
         return self.transform(image)
 
 ############################ My Augmentations ############################
-# class train_transform_1:
-#     def __init__(self, resize, mean, std, **args):
-#         self.transform = Compose([
-#             CenterCrop((320, 256)),
-#             Resize(resize, Image.BILINEAR),
-#             ColorJitter(0.1, 0.1, 0.1, 0.1),
-#             ToTensor(),
-#             Normalize(mean=mean, std=std),
-#             AddGaussianNoise()
-#         ])
+class train_transform_2:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            ColorJitter(0.1, 0.1, 0.1, 0.1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            AddGaussianNoise()
+        ])
 
-#     def __call__(self, image):
-#         return self.transform(image)
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_1:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            ColorJitter(0.5, 0.5, 0.5, 0.5),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_2:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_3:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(degrees=20),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_4:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            Grayscale(num_output_channels=3),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_5:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=1),
+            RandomRotation(degrees=20),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_6:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomEqualize(p=1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
 ###########################################################################
 
 class val_transform:

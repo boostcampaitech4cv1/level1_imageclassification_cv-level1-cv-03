@@ -23,6 +23,18 @@ class EffNetB0(nn.Module):
     def forward(self, x):
         return self.backbone(x)
 
+class EffNetB4(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        
+        self.EffNetB4 = models.efficientnet_b4(pretrained=True)
+        self.EffNetB4.classifier[1] = nn.Linear(in_features=1792, out_features=num_classes, bias=True)
+
+    def forward(self, x):
+
+        x = self.EffNetB4(x)
+        return x
+
 
 class VGG19(nn.Module):
     def __init__(self, num_classes):

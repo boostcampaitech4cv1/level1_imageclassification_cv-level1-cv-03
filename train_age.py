@@ -15,7 +15,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, ConcatDataset
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset_age import CustomDataset
+from dataset_age import * #CustomDataset, train_transform_Over60_1
 from loss import create_criterion
 
 from sklearn.metrics import f1_score
@@ -116,6 +116,57 @@ def train(data_dir, model_dir, args):
         std=dataset.std,
     )
 
+    ###################################### 내가 추가한 Augmentation들 ######################################
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_1')
+    train_transform_over60_1 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_2')
+    train_transform_over60_2 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_3')
+    train_transform_over60_3 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_4')
+    train_transform_over60_4 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_5')
+    train_transform_over60_5 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_6')
+    train_transform_over60_6 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_2')
+    train_transform_2 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    ########################################################################################################
+
+
     train_img_paths_0, train_labels_0 = train_df_label_0['img_path'].values, train_df_label_0['label'].values
     train_img_paths_1, train_labels_1 = train_df_label_1['img_path'].values, train_df_label_1['label'].values
     train_img_paths_2, train_labels_2 = train_df_label_2['img_path'].values, train_df_label_2['label'].values
@@ -124,11 +175,18 @@ def train(data_dir, model_dir, args):
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_1))
-    ##### 내가 추가한 Augmentation들 #####
-    # train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
-    # train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
-    # train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_1))
-    ######################################
+    ###################################### 내가 추가한 Augmentation들 ######################################
+    # train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_2))
+    # train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_2))
+    # train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_2))
+
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_1))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_2))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_3))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_4))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_5))
+    # train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_6))
+    ########################################################################################################
     train_set = ConcatDataset(train_dataset)
 
     val_img_paths, val_labels = val_df['img_path'].values, val_df['label'].values
