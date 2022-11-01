@@ -99,6 +99,17 @@ def train(data_dir, model_dir, args):
     train_df, val_df, _, _ = train_test_split(df, df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
     train_df_label_0 = train_df[train_df['label']==0]    # male   : 5835
     train_df_label_1 = train_df[train_df['label']==1]    # female : 9285
+    
+    # -- hankerchief dataset
+    hand_dataset_module = getattr(import_module("dataset_gender"), "Handkerchief")
+    hand_dataset = hand_dataset_module(
+        data_dir = data_dir
+    )
+
+    hand_df = pd.DataFrame({'img_path' : hand_dataset.image_paths, 'label' :hand_dataset.gender_labels})
+    # hand_train_df, hand_val_df, _, _ = train_test_split(hand_df, hand_df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
+    hand_train_df_label_0 = hand_df[hand_df['label']==0]    # male   : 5835
+    hand_train_df_label_1 = hand_df[hand_df['label']==1]    # female : 9285
 
     # -- augmentation
     # ------------------------
@@ -109,12 +120,20 @@ def train(data_dir, model_dir, args):
         std=dataset.std,
     )
     # -------------------------
-    transform_module = getattr(import_module("dataset_gender"), 'train_transform_2')
-    train_transform_2 = transform_module(
+    transform_module_2 = getattr(import_module("dataset_gender"), 'train_transform_2')
+    train_transform_2 = transform_module_2(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
     )
+    
+    transform_module_3 = getattr(import_module("dataset_gender"), 'train_transform_3')
+    train_transform_3 = transform_module_3(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
 
     transform_module = getattr(import_module("dataset_gender"), 'val_transform')
     val_transform = transform_module(
@@ -125,15 +144,31 @@ def train(data_dir, model_dir, args):
 
     train_img_paths_0, train_labels_0 = train_df_label_0['img_path'].values, train_df_label_0['label'].values
     train_img_paths_1, train_labels_1 = train_df_label_1['img_path'].values, train_df_label_1['label'].values
+    hand_train_img_paths_0, hand_train_labels_0 = hand_train_df_label_0['img_path'].values, hand_train_df_label_0['label'].values
+    hand_train_img_paths_1, hand_train_labels_1 = hand_train_df_label_1['img_path'].values, hand_train_df_label_1['label'].values
+    
     train_dataset = []
+    
+    # a =CustomDataset(hand_train_img_paths_0, hand_train_labels_0, train_transform_3)
+    # for i in a:
+    #     print(i)
+    
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_2))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
+    # train_dataset.append(CustomDataset(hand_train_img_paths_0, hand_train_labels_0, train_transform_3))
+    # train_dataset.append(CustomDataset(hand_train_img_paths_1, hand_train_labels_1, train_transform_3))
     train_set = ConcatDataset(train_dataset)
 
     val_img_paths, val_labels = val_df['img_path'].values, val_df['label'].values
-    val_set = CustomDataset(val_img_paths, val_labels, val_transform)
+    # hand_val_img_paths, hand_val_labels = hand_val_df['img_path'].values, hand_val_df['label'].values
+    
+    val_dataset = []
+    val_dataset.append(CustomDataset(val_img_paths, val_labels, val_transform))
+    # val_dataset.append(CustomDataset(hand_val_img_paths, hand_val_labels, val_transform))
+    val_set = ConcatDataset(val_dataset)
 
+    
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
@@ -290,7 +325,7 @@ if __name__ == '__main__':
 
     # Data and model checkpoints directories
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
-    parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train (default: 1)')
+    parser.add_argument('--epochs', type=int, default=20, help='number of epochs to train (default: 1)')
     # parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     # parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
     parser.add_argument("--resize", nargs="+", type=list, default=[300, 300], help='resize size for image when training')
