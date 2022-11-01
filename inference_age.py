@@ -62,7 +62,7 @@ def inference(data_dir, model_dir, output_dir, args):
             preds.extend(pred.cpu().numpy())
 
     info['ans'] = preds
-    save_path = os.path.join(output_dir, f'output_age.csv')
+    save_path = os.path.join(output_dir, f'output_age_ResNet152_60overAug5_Resize_mislabel_5559_moreaug.csv')
     info.to_csv(save_path, index=False)
     print(f"Inference Done! Inference result saved at {save_path}")
 

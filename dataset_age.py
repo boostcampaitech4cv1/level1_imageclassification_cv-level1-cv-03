@@ -138,6 +138,15 @@ class MaskBaseDataset(Dataset):
         for profile in profiles:
             if profile.startswith("."):  # "." 로 시작하는 파일은 무시합니다
                 continue
+            ################### AGE MISLABELED DATA ###################
+            if profile[0:6] in ['000039', '000224', '000229', '000237', '000267', '000268', '000273', '000348', '000644', '000687', '000783', '000807', '003531', '003533', '003655', '003851', '005031', '001637']:
+                continue
+            ###########################################################
+
+            ################### 55~59세 데이터 제외 ###################
+            if int(profile[-2:]) in range(55,60):
+                continue
+            ###########################################################
 
             img_folder = os.path.join(self.data_dir, profile)
             for file_name in os.listdir(img_folder):
