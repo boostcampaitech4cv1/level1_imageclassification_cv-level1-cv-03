@@ -1,3 +1,4 @@
+from math import degrees
 import os
 import random
 from collections import defaultdict
@@ -8,12 +9,13 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, GaussianBlur, Grayscale, RandomHorizontalFlip
+from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, GaussianBlur, Grayscale, RandomHorizontalFlip, RandomGrayscale, RandomRotation
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
     ".PNG", ".ppm", ".PPM", ".bmp", ".BMP",
 ]
+IMG_SIZE = {'h':512, 'w':384}
 
 
 def is_image_file(filename):
@@ -85,6 +87,8 @@ class MaskBaseDataset(Dataset):
 
     image_paths = []
     mask_labels = []
+    image_paths_bandana = []
+    mask_labels_bandana = []
 
     def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
         self.data_dir = data_dir
@@ -103,18 +107,24 @@ class MaskBaseDataset(Dataset):
                 continue
 
             img_folder = os.path.join(self.data_dir, profile)
+            folder_num = int(profile[2:6])
+
             for file_name in os.listdir(img_folder):
                 _file_name, ext = os.path.splitext(file_name)
                 if _file_name not in self._file_names:  # "." 로 시작하는 파일 및 invalid 한 파일들은 무시합니다
                     continue
-
+                
                 img_path = os.path.join(self.data_dir, profile, file_name)  # (resized_data, 000004_male_Asian_54, mask1.jpg)
                 mask_label = self._file_names[_file_name]
 
-                id, gender, race, age = profile.split("_")
+                #id, gender, race, age = profile.split("_")
 
-                self.image_paths.append(img_path)
-                self.mask_labels.append(mask_label)
+                if folder_num>=5400 and folder_num<5600 and _file_name=='mask5':
+                    self.image_paths_bandana.append(img_path)
+                    self.mask_labels_bandana.append(mask_label)
+                else:
+                    self.image_paths.append(img_path)
+                    self.mask_labels.append(mask_label)
 
     def calc_statistics(self):
         has_statistics = self.mean is not None and self.std is not None
@@ -273,24 +283,68 @@ class train_transform_1:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
+            RandomGrayscale(p=0.5),
             ToTensor(),
-            Normalize(mean=mean, std=std),
+            Normalize(mean=mean, std=std)
         ])
 
     def __call__(self, image):
         return self.transform(image)
 
-# class train_transform_2:
-#     def __init__(self, resize, mean, std, **args):
-#         self.transform = Compose([
-#             Resize(resize, Image.BILINEAR),
-#             ToTensor(),
-            
-#             Normalize(mean=mean, std=std),
-#         ])
+class train_transform_2:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
 
-#     def __call__(self, image):
-#         return self.transform(image)
+class train_transform_3:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=1.0),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+class train_transform_4:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=1.0),
+            RandomGrayscale(p=1.0),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_5:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(degrees=(10,20)),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+class train_transform_6:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(degrees=(10,20)),
+            RandomGrayscale(p=1.0),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+
 
 class val_transform:
     def __init__(self, resize, mean, std, **args):

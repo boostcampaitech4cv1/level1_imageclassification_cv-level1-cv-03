@@ -97,13 +97,47 @@ def train(data_dir, model_dir, args):
 
     df = pd.DataFrame({'img_path' : dataset.image_paths, 'label' :dataset.mask_labels})
     train_df, val_df, _, _ = train_test_split(df, df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
-    train_df_label_0 = train_df[train_df['label']==0]    # wear      : 10800
+    train_df_label_0 = train_df[train_df['label']==0]    # wear      : 10697
     train_df_label_1 = train_df[train_df['label']==1]    # incorrect : 2160
     train_df_label_2 = train_df[train_df['label']==2]    # not wear  : 2160
+
+    df_bandana = pd.DataFrame({'img_path' : dataset.image_paths_bandana, 'label' :dataset.mask_labels_bandana})
+    # bandana :  train : 102      val : 26
+    train_df_bandana, val_df_bandana, _, _ = train_test_split(df_bandana, df_bandana['label'].values, test_size=args.val_ratio, random_state=args.seed)
 
     # -- augmentation
     transform_module = getattr(import_module("dataset_mask"), 'train_transform_1')
     train_transform_1 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    transform_module = getattr(import_module("dataset_mask"), 'train_transform_2')
+    train_transform_2 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    transform_module = getattr(import_module("dataset_mask"), 'train_transform_3')
+    train_transform_3 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    transform_module = getattr(import_module("dataset_mask"), 'train_transform_4')
+    train_transform_4 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    transform_module = getattr(import_module("dataset_mask"), 'train_transform_5')
+    train_transform_5 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    transform_module = getattr(import_module("dataset_mask"), 'train_transform_6')
+    train_transform_6 = transform_module(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
@@ -120,15 +154,37 @@ def train(data_dir, model_dir, args):
     train_img_paths_0, train_labels_0 = train_df_label_0['img_path'].values, train_df_label_0['label'].values
     train_img_paths_1, train_labels_1 = train_df_label_1['img_path'].values, train_df_label_1['label'].values
     train_img_paths_2, train_labels_2 = train_df_label_2['img_path'].values, train_df_label_2['label'].values
+    train_img_paths_bandana, train_labels_bandana = train_df_bandana['img_path'].values, train_df_bandana['label'].values
     train_dataset = []
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
-    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
-    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_1))
+    #########################################################################################
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_2))
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_3))
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_4))
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_5))
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_6))
+    #########################################################################################
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_2))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_3))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_4))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_5))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_6))
+    #########################################################################################
+    train_dataset.append(CustomDataset(train_img_paths_bandana, train_labels_bandana, train_transform_2))
+    train_dataset.append(CustomDataset(train_img_paths_bandana, train_labels_bandana, train_transform_3))
+    train_dataset.append(CustomDataset(train_img_paths_bandana, train_labels_bandana, train_transform_4))
+    train_dataset.append(CustomDataset(train_img_paths_bandana, train_labels_bandana, train_transform_5))
+    train_dataset.append(CustomDataset(train_img_paths_bandana, train_labels_bandana, train_transform_6))
+
     train_set = ConcatDataset(train_dataset)
 
     val_img_paths, val_labels = val_df['img_path'].values, val_df['label'].values
-    val_set = CustomDataset(val_img_paths, val_labels, val_transform)
-    
+    val_img_paths_bandana, val_labels_bandana = val_df_bandana['img_path'].values, val_df_bandana['label'].values
+    val_dataset = []
+
+    val_dataset.append(CustomDataset(val_img_paths, val_labels, val_transform))
+    val_dataset.append(CustomDataset(val_img_paths_bandana, val_labels_bandana, val_transform))
+    val_set = ConcatDataset(val_dataset)
     
     train_loader = DataLoader(
         train_set,
@@ -174,6 +230,7 @@ def train(data_dir, model_dir, args):
 
     best_val_acc = 0
     best_val_loss = np.inf
+    best_val_f1 = 0
 
     for epoch in range(1, args.epochs+1):
         # train loop
@@ -255,14 +312,19 @@ def train(data_dir, model_dir, args):
 
             val_f1 = f1_score(epoch_preds, epoch_labels, average="macro")
 
-            if val_acc > best_val_acc:
-                print(f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
+            # if val_acc > best_val_acc:
+            #     print(f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
+            #     torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
+            #     best_val_acc = val_acc
+            if val_f1 > best_val_f1:
+                print(f"New best model for val f1 score : {val_f1:4.2%}! saving the best model..")
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
-                best_val_acc = val_acc
+                best_val_f1 = val_f1
+
             torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
             print(
                 f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2}, f1: {val_f1:4.2} || "
-                f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
+                f"best f1 score : {best_val_f1:4.2}, best loss: {best_val_loss:4.2}"
             )
             logger.add_scalar("Val/loss", val_loss, epoch)
             logger.add_scalar("Val/accuracy", val_acc, epoch)
@@ -271,6 +333,7 @@ def train(data_dir, model_dir, args):
             wandb.log({
                 "Valid loss":val_loss,
                 "Valid acc":val_acc,
+                "Valid f1-score":val_f1,
                 "results":figure
             })
 
@@ -284,7 +347,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train (default: 1)')
     # parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     # parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
-    parser.add_argument("--resize", nargs="+", type=list, default=[128, 96], help='resize size for image when training')
+    parser.add_argument("--resize", nargs="+", type=list, default=[256, 192], help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
     parser.add_argument('--valid_batch_size', type=int, default=64, help='input batch size for validing (default: 1000)')
     parser.add_argument('--model', type=str, default='ModelMask', help='model type (default: BaseModel)')
