@@ -291,6 +291,7 @@ class train_transform_1:
     def __call__(self, image):
         return self.transform(image)
 
+
 class train_transform_2:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
@@ -300,6 +301,7 @@ class train_transform_2:
         ])
     def __call__(self, image):
         return self.transform(image)
+
 
 class train_transform_3:
     def __init__(self, resize, mean, std, **args):
@@ -311,6 +313,8 @@ class train_transform_3:
         ])
     def __call__(self, image):
         return self.transform(image)
+
+
 class train_transform_4:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
@@ -323,6 +327,7 @@ class train_transform_4:
     def __call__(self, image):
         return self.transform(image)
 
+
 class train_transform_5:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
@@ -333,6 +338,8 @@ class train_transform_5:
         ])
     def __call__(self, image):
         return self.transform(image)
+
+
 class train_transform_6:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
@@ -356,3 +363,48 @@ class val_transform:
 
     def __call__(self, image):
         return self.transform(image)
+
+
+#################################
+from torchvision import transforms
+class Grayscale:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            transforms.Grayscale(num_output_channels=3),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+
+class HFlip:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            transforms.RandomHorizontalFlip(p=1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+
+class Zitter:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            transforms.ColorJitter(contrast=0.3, hue=0.1, saturation=0.1, brightness=0),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+#################################
