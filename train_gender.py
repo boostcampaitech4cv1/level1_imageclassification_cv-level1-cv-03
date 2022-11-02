@@ -101,15 +101,15 @@ def train(data_dir, model_dir, args):
     train_df_label_1 = train_df[train_df['label']==1]    # female : 9285
     
     # -- hankerchief dataset
-    hand_dataset_module = getattr(import_module("dataset_gender"), "Handkerchief")
-    hand_dataset = hand_dataset_module(
-        data_dir = data_dir
-    )
+    # hand_dataset_module = getattr(import_module("dataset_gender"), "Handkerchief")
+    # hand_dataset = hand_dataset_module(
+    #     data_dir = data_dir
+    # )
 
-    hand_df = pd.DataFrame({'img_path' : hand_dataset.image_paths, 'label' :hand_dataset.gender_labels})
-    # hand_train_df, hand_val_df, _, _ = train_test_split(hand_df, hand_df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
-    hand_train_df_label_0 = hand_df[hand_df['label']==0]    # male   : 5835
-    hand_train_df_label_1 = hand_df[hand_df['label']==1]    # female : 9285
+    bandana_df = pd.DataFrame({'img_path' : dataset.bandana_image_paths, 'label' :dataset.bandana_gender_labels})
+    bandana_train_df, bandana_val_df, _, _ = train_test_split(bandana_df, bandana_df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=bandana_df['label'].values)
+    # hand_train_df_label_0 = bandana_df[bandana_df['label']==0]    # male   : 5835
+    # hand_train_df_label_1 = bandana_df[bandana_df['label']==1]    # female : 9285
 
     # -- augmentation
     # ------------------------
@@ -133,6 +133,13 @@ def train(data_dir, model_dir, args):
         mean=dataset.mean,
         std=dataset.std,
     )
+    
+    # transform_module_4 = getattr(import_module("dataset_gender"), 'train_transform_4')
+    # train_transform_4 = transform_module_4(
+    #     resize=args.resize,
+    #     mean=dataset.mean,
+    #     std=dataset.std,
+    # )
 
 
     transform_module = getattr(import_module("dataset_gender"), 'val_transform')
@@ -144,27 +151,29 @@ def train(data_dir, model_dir, args):
 
     train_img_paths_0, train_labels_0 = train_df_label_0['img_path'].values, train_df_label_0['label'].values
     train_img_paths_1, train_labels_1 = train_df_label_1['img_path'].values, train_df_label_1['label'].values
-    hand_train_img_paths_0, hand_train_labels_0 = hand_train_df_label_0['img_path'].values, hand_train_df_label_0['label'].values
-    hand_train_img_paths_1, hand_train_labels_1 = hand_train_df_label_1['img_path'].values, hand_train_df_label_1['label'].values
+    bandana_img_paths_bandana, bandana_train_labels = bandana_train_df['img_path'].values, bandana_train_df['label'].values
+    # hand_train_img_paths_0, hand_train_labels_0 = bandana_train_df_label_0['img_path'].values, hand_train_df_label_0['label'].values
+    # hand_train_img_paths_1, hand_train_labels_1 = hand_train_df_label_1['img_path'].values, hand_train_df_label_1['label'].values
     
     train_dataset = []
-    
-    # a =CustomDataset(hand_train_img_paths_0, hand_train_labels_0, train_transform_3)
-    # for i in a:
-    #     print(i)
     
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_2))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
+    train_dataset.append(CustomDataset(bandana_img_paths_bandana, bandana_train_labels, train_transform_3))
+    # train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_2))
+    
     # train_dataset.append(CustomDataset(hand_train_img_paths_0, hand_train_labels_0, train_transform_3))
     # train_dataset.append(CustomDataset(hand_train_img_paths_1, hand_train_labels_1, train_transform_3))
     train_set = ConcatDataset(train_dataset)
 
     val_img_paths, val_labels = val_df['img_path'].values, val_df['label'].values
+    bandana_val_img_paths, bandana_val_labels = bandana_val_df['img_path'].values, bandana_val_df['label'].values
     # hand_val_img_paths, hand_val_labels = hand_val_df['img_path'].values, hand_val_df['label'].values
     
     val_dataset = []
     val_dataset.append(CustomDataset(val_img_paths, val_labels, val_transform))
+    val_dataset.append(CustomDataset(bandana_val_img_paths, bandana_val_labels, val_transform))
     # val_dataset.append(CustomDataset(hand_val_img_paths, hand_val_labels, val_transform))
     val_set = ConcatDataset(val_dataset)
 
@@ -325,7 +334,7 @@ if __name__ == '__main__':
 
     # Data and model checkpoints directories
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
-    parser.add_argument('--epochs', type=int, default=20, help='number of epochs to train (default: 1)')
+    parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train (default: 1)')
     # parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     # parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
     parser.add_argument("--resize", nargs="+", type=list, default=[300, 300], help='resize size for image when training')
