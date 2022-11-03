@@ -134,12 +134,20 @@ def train(data_dir, model_dir, args):
         std=dataset.std,
     )
     
-    # transform_module_4 = getattr(import_module("dataset_gender"), 'train_transform_4')
-    # train_transform_4 = transform_module_4(
-    #     resize=args.resize,
-    #     mean=dataset.mean,
-    #     std=dataset.std,
-    # )
+    transform_module_4 = getattr(import_module("dataset_gender"), 'train_transform_4')
+    train_transform_4 = transform_module_4(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    
+    transform_module_5 = getattr(import_module("dataset_gender"), 'train_transform_5')
+    train_transform_5 = transform_module_5(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
 
 
     transform_module = getattr(import_module("dataset_gender"), 'val_transform')
@@ -159,9 +167,13 @@ def train(data_dir, model_dir, args):
     
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_2))
+    train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_4))
+    train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_5))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_4))
     train_dataset.append(CustomDataset(bandana_img_paths_bandana, bandana_train_labels, train_transform_3))
-    # train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_2))
+    
+    
     
     # train_dataset.append(CustomDataset(hand_train_img_paths_0, hand_train_labels_0, train_transform_3))
     # train_dataset.append(CustomDataset(hand_train_img_paths_1, hand_train_labels_1, train_transform_3))
@@ -334,7 +346,7 @@ if __name__ == '__main__':
 
     # Data and model checkpoints directories
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
-    parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train (default: 1)')
+    parser.add_argument('--epochs', type=int, default=30, help='number of epochs to train (default: 1)')
     # parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     # parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
     parser.add_argument("--resize", nargs="+", type=list, default=[300, 300], help='resize size for image when training')

@@ -8,7 +8,8 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, RandomHorizontalFlip, Grayscale
+from torchvision.transforms import (
+    Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, RandomHorizontalFlip, Grayscale, GaussianBlur)
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
@@ -334,19 +335,36 @@ class train_transform_3:
 
     def __call__(self, image):
         return self.transform(image)
-
-class train_transform_2:
+    
+class train_transform_4:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
             ToTensor(),
             RandomHorizontalFlip(),
-            ColorJitter(saturation=0.5, hue=0.5),
+            GaussianBlur(kernel_size=5),
             Normalize(mean=mean, std=std),
         ])
-
+        
     def __call__(self, image):
         return self.transform(image)
+        
+class train_transform_5:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            RandomHorizontalFlip(),
+            GaussianBlur(kernel_size=5),
+            ColorJitter(0.5, 0.5, 0.5, 0.5),
+            Normalize(mean=mean, std=std),
+        ])
+    
+    def __call__(self, image):
+        return self.transform(image)
+        
+
+
 
 class val_transform:
     def __init__(self, resize, mean, std, **args):
