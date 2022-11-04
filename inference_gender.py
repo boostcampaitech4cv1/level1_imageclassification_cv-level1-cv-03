@@ -17,7 +17,6 @@ def load_model(saved_model, num_classes, device):
     # model = torch.nn.DataParallel(model)
     # model.to(device)
 
-
     # tarpath = os.path.join(saved_model, 'best.tar.gz')
     # tar = tarfile.open(tarpath, 'r:gz')
     # tar.extractall(path=saved_model)
@@ -80,7 +79,7 @@ if __name__ == '__main__':
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_EVAL', '/opt/ml/input/data/eval'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model/exp_gender8'))
+    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model/exp_gender19'))
     parser.add_argument('--output_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', './output_gender'))
 
     args = parser.parse_args()

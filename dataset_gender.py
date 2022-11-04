@@ -359,11 +359,78 @@ class train_transform_5:
             ColorJitter(0.5, 0.5, 0.5, 0.5),
             Normalize(mean=mean, std=std),
         ])
+        
+    def __call__(self, image):
+        return self.transform(image)      
+        
+###################################
+
+class train_transform_6:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop(resize),
+            ToTensor(),
+            RandomHorizontalFlip(),
+            GaussianBlur(kernel_size=5),
+            Normalize(mean=mean, std=std),
+        ])
+
+    
+    def __call__(self, image):
+        return self.transform(image)
+
+
+class train_transform_7:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop(resize),
+            ToTensor(),
+            RandomHorizontalFlip(),
+            ColorJitter(0.5, 0.5, 0.5, 0.5),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_8:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop(resize),
+            ToTensor(),
+            RandomHorizontalFlip(),
+            GaussianBlur(kernel_size=5),
+            Grayscale(num_output_channels=3),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+        
+class train_transform_9:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop(resize),
+            ToTensor(),
+            RandomHorizontalFlip(),
+            Grayscale(num_output_channels=3),
+            Normalize(mean=mean, std=std),
+        ])    
     
     def __call__(self, image):
         return self.transform(image)
         
-
+class train_transform_10:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop(resize),
+            ToTensor(),
+            RandomHorizontalFlip(),
+            ColorJitter(0.5, 0.5, 0.5, 0.5),
+            GaussianBlur(kernel_size=5),
+            Normalize(mean=mean, std=std),
+        ])
+        
+    def __call__(self, image):
+        return self.transform(image)
 
 
 class val_transform:

@@ -147,6 +147,42 @@ def train(data_dir, model_dir, args):
         mean=dataset.mean,
         std=dataset.std,
     )
+    
+    transform_module_6 = getattr(import_module("dataset_gender"), 'train_transform_6')
+    train_transform_6 = transform_module_6(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    
+    transform_module_7 = getattr(import_module("dataset_gender"), 'train_transform_7')
+    train_transform_7 = transform_module_7(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    
+    transform_module_8 = getattr(import_module("dataset_gender"), 'train_transform_8')
+    train_transform_8 = transform_module_8(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    
+    transform_module_9 = getattr(import_module("dataset_gender"), 'train_transform_9')
+    train_transform_9 = transform_module_9(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    
+    transform_module_10 = getattr(import_module("dataset_gender"), 'train_transform_10')
+    train_transform_10 = transform_module_9(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
 
 
 
@@ -167,11 +203,19 @@ def train(data_dir, model_dir, args):
     
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_2))
+    train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_3))
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_4))
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_5))
+    train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_6))
+    train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_7))
+    train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_8))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_3))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_4))
-    train_dataset.append(CustomDataset(bandana_img_paths_bandana, bandana_train_labels, train_transform_3))
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_7)) 
+    train_dataset.append(CustomDataset(bandana_img_paths_bandana, bandana_train_labels, train_transform_9))
+    train_dataset.append(CustomDataset(bandana_img_paths_bandana, bandana_train_labels, train_transform_10))
+    
     
     
     
