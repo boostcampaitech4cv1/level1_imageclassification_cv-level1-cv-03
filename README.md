@@ -1,9 +1,18 @@
-# pstage_01_image_classification
+# CV03 @AI Tech 4기 Image Classification Competition
 
 ## Getting Started    
 ### Dependencies
-- torch==1.7.1
-- torchvision==0.8.2                                                              
+- torch==1.12.1
+- torchvision==0.13.1
+- pandas~=1.2.0
+- scikit-learn~=0.24.1
+- matplotlib==3.5.1
+- numpy~=1.21.5
+- python-dotenv~=0.16.0
+- Pillow~=7.2.0
+- sklearn~=0.0
+- timm==0.6.11
+- wandb==0.13.4
 
 ### Install Requirements
 - `pip install -r requirements.txt`
