@@ -328,20 +328,6 @@ class train_transform_1:
         return self.transform(image)
 
 ############################ My Augmentations ############################
-class train_transform_2:
-    def __init__(self, resize, mean, std, **args):
-        self.transform = Compose([
-            CenterCrop((320, 256)),
-            Resize(resize, Image.BILINEAR),
-            ColorJitter(0.1, 0.1, 0.1, 0.1),
-            ToTensor(),
-            Normalize(mean=mean, std=std),
-            AddGaussianNoise()
-        ])
-
-    def __call__(self, image):
-        return self.transform(image)
-
 class train_transform_Over60_1:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
@@ -411,11 +397,12 @@ class train_transform_Over60_5:
     def __call__(self, image):
         return self.transform(image)
 
-class train_transform_Over60_6:
+class train_transform_30to60:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
-            RandomEqualize(p=1),
+            RandomHorizontalFlip(p=1),
+            RandomRotation(degrees=20),
             ToTensor(),
             Normalize(mean=mean, std=std),
             # AddGaussianNoise()

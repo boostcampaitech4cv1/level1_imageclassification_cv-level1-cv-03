@@ -62,7 +62,7 @@ def inference(data_dir, model_dir, output_dir, args):
             preds.extend(pred.cpu().numpy())
 
     info['ans'] = preds
-    save_path = os.path.join(output_dir, f'output_age_ResNet152_60overAug5_Resize_mislabel_5559_moreaug.csv')
+    save_path = os.path.join(output_dir, f'output_age.csv')
     info.to_csv(save_path, index=False)
     print(f"Inference Done! Inference result saved at {save_path}")
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     # Data and model checkpoints directories
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
     parser.add_argument('--resize', type=tuple, default=(256, 192), help='resize size for image when you trained (default: (96, 128))')
-    parser.add_argument('--model', type=str, default='ModelAge', help='model type (default: BaseModel)')
+    parser.add_argument('--model', type=str, default='ResNet152', help='model type (default: BaseModel)')
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_EVAL', '/opt/ml/input/data/eval'))

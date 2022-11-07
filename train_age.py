@@ -98,7 +98,7 @@ def train(data_dir, model_dir, args):
     df = pd.DataFrame({'img_path' : dataset.image_paths, 'label' :dataset.age_labels})
     train_df, val_df, _, _ = train_test_split(df, df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
     train_df_label_0 = train_df[train_df['label']==0]   # ~30   : 7174
-    train_df_label_1 = train_df[train_df['label']==1]   # 30~60 : 6871
+    train_df_label_1 = train_df[train_df['label']==1]   # 30~60 : 3646
     train_df_label_2 = train_df[train_df['label']==2]   # 60~   : 1075
 
     # -- augmentation
@@ -151,15 +151,8 @@ def train(data_dir, model_dir, args):
         std=dataset.std,
     )
 
-    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_6')
-    train_transform_over60_6 = transform_module(
-        resize=args.resize,
-        mean=dataset.mean,
-        std=dataset.std,
-    )
-
-    transform_module = getattr(import_module("dataset_age"), 'train_transform_2')
-    train_transform_2 = transform_module(
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_30to60')
+    train_transform_30to60 = transform_module(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
@@ -175,18 +168,17 @@ def train(data_dir, model_dir, args):
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_1))
-    ###################################### 내가 추가한 Augmentation들 ######################################
-    # train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_2))
-    # train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_2))
-    # train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_2))
-    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_over60_5))
 
+    ###################################### 내가 추가한 Augmentation들 ######################################
+    # 30 이상 60 미만 데이터 2배로 증강 -> 7292장
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_30to60))
+
+    # 60 이상 데이터 6배로 증강 -> 6450장
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_1))
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_2))
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_3))
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_4))
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_5))
-    # train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_6))
     ########################################################################################################
     train_set = ConcatDataset(train_dataset)
 
@@ -351,7 +343,7 @@ if __name__ == '__main__':
     parser.add_argument("--resize", nargs="+", type=list, default=[256, 192], help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
     parser.add_argument('--valid_batch_size', type=int, default=64, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--model', type=str, default='ModelAge', help='model type (default: BaseModel)')
+    parser.add_argument('--model', type=str, default='ResNet152', help='model type (default: BaseModel)')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: SGD)')
     parser.add_argument('--lr', type=float, default=1e-5, help='learning rate (default:1e-3)')
     parser.add_argument('--val_ratio', type=float, default=0.2, help='ratio for validaton (default: 0.2)')

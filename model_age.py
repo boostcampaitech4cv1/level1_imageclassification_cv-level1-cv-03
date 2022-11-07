@@ -23,6 +23,7 @@ class EffNetB0(nn.Module):
     def forward(self, x):
         return self.backbone(x)
 
+
 class EffNetB4(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
@@ -60,6 +61,7 @@ class ResNet50(nn.Module):
 
         x = self.ResNet50(x)
         return x
+
 
 class ResNet152(nn.Module):
     def __init__(self, num_classes):
