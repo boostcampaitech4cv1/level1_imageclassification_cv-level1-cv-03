@@ -2,12 +2,13 @@
 
 ## **Competition Overview**
 
-COVID-19의 확산으로 우리나라는 물론 전 세계 사람들은 경제적, 생산적인 활동에 많은 제약을 가지게 되었습니다
+#### COVID-19의 확산으로 우리나라는 물론 전 세계 사람들은 경제적, 생산적인 활동에 많은 제약을 가지게 되었습니다
 
 이를 해결하고 추가적인 분류를 적용하여서 마스크 착용여부(o, x), 성별(male, female), 나이(30이하, 30~60, 60이상)등
 
 18개의 class를 분류하는 모델을 설계하고자 한다
-![image](https://user-images.githubusercontent.com/68888169/200252310-6085da88-0a73-4b53-97d1-9a8e27a4eb70.png){: width="10" height = "10"}
+<br><img src="https://user-images.githubusercontent.com/68888169/200252310-6085da88-0a73-4b53-97d1-9a8e27a4eb70.png" width="640"/><br>
+
 
 
 
