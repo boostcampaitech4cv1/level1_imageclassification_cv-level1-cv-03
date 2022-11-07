@@ -15,7 +15,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, ConcatDataset
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset_age import CustomDataset
+from dataset_age import * #CustomDataset, train_transform_Over60_1
 from loss import create_criterion
 
 from sklearn.metrics import f1_score
@@ -98,7 +98,7 @@ def train(data_dir, model_dir, args):
     df = pd.DataFrame({'img_path' : dataset.image_paths, 'label' :dataset.age_labels})
     train_df, val_df, _, _ = train_test_split(df, df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
     train_df_label_0 = train_df[train_df['label']==0]   # ~30   : 7174
-    train_df_label_1 = train_df[train_df['label']==1]   # 30~60 : 6871
+    train_df_label_1 = train_df[train_df['label']==1]   # 30~60 : 3646
     train_df_label_2 = train_df[train_df['label']==2]   # 60~   : 1075
 
     # -- augmentation
@@ -116,13 +116,70 @@ def train(data_dir, model_dir, args):
         std=dataset.std,
     )
 
+    ###################################### 내가 추가한 Augmentation들 ######################################
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_1')
+    train_transform_over60_1 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_2')
+    train_transform_over60_2 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_3')
+    train_transform_over60_3 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_4')
+    train_transform_over60_4 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_Over60_5')
+    train_transform_over60_5 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+
+    transform_module = getattr(import_module("dataset_age"), 'train_transform_30to60')
+    train_transform_30to60 = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    ########################################################################################################
+
+
     train_img_paths_0, train_labels_0 = train_df_label_0['img_path'].values, train_df_label_0['label'].values
     train_img_paths_1, train_labels_1 = train_df_label_1['img_path'].values, train_df_label_1['label'].values
     train_img_paths_2, train_labels_2 = train_df_label_2['img_path'].values, train_df_label_2['label'].values
     train_dataset = []
+    # 기본 이미지들을 데이터셋에다가 추가
     train_dataset.append(CustomDataset(train_img_paths_0, train_labels_0, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_1))
     train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_1))
+
+    ###################################### 내가 추가한 Augmentation들 ######################################
+    # 30 이상 60 미만 데이터 2배로 증강 -> 7292장
+    train_dataset.append(CustomDataset(train_img_paths_1, train_labels_1, train_transform_30to60))
+
+    # 60 이상 데이터 6배로 증강 -> 6450장
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_1))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_2))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_3))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_4))
+    train_dataset.append(CustomDataset(train_img_paths_2, train_labels_2, train_transform_over60_5))
+    ########################################################################################################
     train_set = ConcatDataset(train_dataset)
 
     val_img_paths, val_labels = val_df['img_path'].values, val_df['label'].values
@@ -268,6 +325,7 @@ def train(data_dir, model_dir, args):
             wandb.log({
                 "Valid loss":val_loss,
                 "Valid acc":val_acc,
+                "Valid f1-score":val_f1,
                 "results":figure
             })
 
@@ -279,13 +337,13 @@ if __name__ == '__main__':
 
     # Data and model checkpoints directories
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
-    parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train (default: 1)')
+    parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train (default: 1)')
     # parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     # parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
-    parser.add_argument("--resize", nargs="+", type=list, default=[128, 96], help='resize size for image when training')
+    parser.add_argument("--resize", nargs="+", type=list, default=[256, 192], help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
     parser.add_argument('--valid_batch_size', type=int, default=64, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--model', type=str, default='ModelAge', help='model type (default: BaseModel)')
+    parser.add_argument('--model', type=str, default='ResNet152', help='model type (default: BaseModel)')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: SGD)')
     parser.add_argument('--lr', type=float, default=1e-5, help='learning rate (default:1e-3)')
     parser.add_argument('--val_ratio', type=float, default=0.2, help='ratio for validaton (default: 0.2)')

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, GaussianBlur, RandomHorizontalFlip, RandomRotation, Grayscale
+from torchvision.transforms import * # Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, GaussianBlur, RandomHorizontalFlip, RandomRotation, Grayscale
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
@@ -138,6 +138,15 @@ class MaskBaseDataset(Dataset):
         for profile in profiles:
             if profile.startswith("."):  # "." 로 시작하는 파일은 무시합니다
                 continue
+            ################### AGE MISLABELED DATA ###################
+            if profile[0:6] in ['000039', '000224', '000229', '000237', '000267', '000268', '000273', '000348', '000644', '000687', '000783', '000807', '003531', '003533', '003655', '003851', '005031', '001637']:
+                continue
+            ###########################################################
+
+            ################### 55~59세 데이터 제외 ###################
+            if int(profile[-2:]) in range(55,60):
+                continue
+            ###########################################################
 
             img_folder = os.path.join(self.data_dir, profile)
             for file_name in os.listdir(img_folder):
@@ -317,6 +326,91 @@ class train_transform_1:
 
     def __call__(self, image):
         return self.transform(image)
+
+############################ My Augmentations ############################
+class train_transform_Over60_1:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            ColorJitter(0.5, 0.5, 0.5, 0.5),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_2:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_3:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(degrees=20),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_4:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            Grayscale(num_output_channels=3),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_Over60_5:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=1),
+            RandomRotation(degrees=20),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_30to60:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=1),
+            RandomRotation(degrees=20),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            # AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+###########################################################################
 
 class val_transform:
     def __init__(self, resize, mean, std, **args):
