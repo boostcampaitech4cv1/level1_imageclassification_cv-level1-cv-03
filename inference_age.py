@@ -72,8 +72,8 @@ if __name__ == '__main__':
 
     # Data and model checkpoints directories
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--resize', type=tuple, default=(128, 96), help='resize size for image when you trained (default: (96, 128))')
-    parser.add_argument('--model', type=str, default='ModelAge', help='model type (default: BaseModel)')
+    parser.add_argument('--resize', type=tuple, default=(256, 192), help='resize size for image when you trained (default: (96, 128))')
+    parser.add_argument('--model', type=str, default='ResNet152', help='model type (default: BaseModel)')
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_EVAL', '/opt/ml/input/data/eval'))
