@@ -278,12 +278,10 @@ class CustomDataset(Dataset):
     def __len__(self):
         return len(self.img_paths)
 
-
 class train_transform_1:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
-            RandomGrayscale(p=0.5),
             ToTensor(),
             Normalize(mean=mean, std=std)
         ])
@@ -296,6 +294,7 @@ class train_transform_2:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
+            RandomGrayscale(p=1.0),
             ToTensor(),
             Normalize(mean=mean, std=std)
         ])
@@ -307,7 +306,7 @@ class train_transform_3:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
-            RandomHorizontalFlip(p=1.0),
+            RandomRotation(degrees=(5,10)),
             ToTensor(),
             Normalize(mean=mean, std=std)
         ])
@@ -319,7 +318,7 @@ class train_transform_4:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
-            RandomHorizontalFlip(p=1.0),
+            RandomRotation(degrees=(5,10)),
             RandomGrayscale(p=1.0),
             ToTensor(),
             Normalize(mean=mean, std=std)
@@ -332,7 +331,7 @@ class train_transform_5:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
-            RandomRotation(degrees=(10,20)),
+            RandomRotation(degrees=(-10,-5)),
             ToTensor(),
             Normalize(mean=mean, std=std)
         ])
@@ -344,7 +343,51 @@ class train_transform_6:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
-            RandomRotation(degrees=(10,20)),
+            RandomRotation(degrees=(-10,-5)),
+            RandomGrayscale(p=1.0),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_7:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(degrees=(11,20)),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+class train_transform_8:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(degrees=(11,20)),
+            RandomGrayscale(p=1.0),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+
+class train_transform_9:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(degrees=(-20,-11)),
+            ToTensor(),
+            Normalize(mean=mean, std=std)
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+class train_transform_10:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(degrees=(-20,-11)),
             RandomGrayscale(p=1.0),
             ToTensor(),
             Normalize(mean=mean, std=std)
